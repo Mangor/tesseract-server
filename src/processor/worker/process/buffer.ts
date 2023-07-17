@@ -9,7 +9,7 @@ export interface Streams {
 const blStream = (
   stream: NodeJS.ReadableStream,
   callback: (err: Error, buffer: Buffer) => void,
-): BufferList => stream.pipe(new BufferList(callback));
+): BufferList => (stream as any).pipe(new BufferList(callback));
 
 const mapObjectEntries = <TMapped, TValue>(
   obj: { [key: string]: TValue },

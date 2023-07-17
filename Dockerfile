@@ -1,16 +1,16 @@
-FROM node:16-alpine3.15 AS base
+FROM node:18-alpine3.15 AS base
 RUN apk add --no-cache tini #curl
 WORKDIR /app
 COPY ./public/ ./public/
-COPY ./package.json /yarn.lock ./
+COPY ./package.json /package-lock.json ./
 
 FROM base AS deps_prod
 WORKDIR /app
 RUN env && ls -lah /usr/local/bin
-RUN /usr/local/bin/yarn install --production
+RUN /usr/local/bin/npm ci
 
 FROM base AS base_prod
-RUN apk add --no-cache tesseract-ocr tesseract-ocr-data-deu tesseract-ocr-data-kat tesseract-ocr-data-fra tesseract-ocr-data-spa tesseract-ocr-data-pol tesseract-ocr-data-rus
+RUN apk add --no-cache tesseract-ocr
 COPY --from=deps_prod /app/node_modules/ ./dist/node_modules/
 COPY ./docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
@@ -26,13 +26,13 @@ COPY $DIST_SRC/index.js $DIST_SRC/*.production.*.js ./dist/
 
 FROM deps_prod AS deps_dev
 WORKDIR /app
-RUN /usr/local/bin/yarn install
+RUN /usr/local/bin/npm ci
 
 FROM deps_dev AS builder
 WORKDIR /app
 COPY ./src ./src/
 COPY ./tsconfig.json ./
-RUN /usr/local/bin/yarn build
+RUN /usr/local/bin/npm run build
 
 FROM base_prod AS prod_build_dist
 WORKDIR /app
